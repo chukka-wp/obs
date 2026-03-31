@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>chukka-obs</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #1a1a1a;
+            --surface: #242424;
+            --border: #333;
+            --text: #e0e0e0;
+            --text-muted: #888;
+            --accent: #00c2ff;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px;
+            padding: 16px;
+            min-width: 280px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--red);
+            transition: background 300ms;
+        }
+
+        .status-dot.connected { background: var(--green); }
+        .status-dot.reconnecting { background: var(--amber); animation: blink 1s infinite; }
+        .status-dot.disconnected { background: var(--red); }
+        .status-dot.not-configured { background: var(--text-muted); }
+
+        @keyframes blink {
+            50% { opacity: 0.3; }
+        }
+
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .match-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .match-name {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .match-detail {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            padding: 8px 10px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 200ms;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        input[type="text"]::placeholder {
+            color: #555;
+        }
+
+        button {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 200ms;
+            white-space: nowrap;
+        }
+
+        button:hover { opacity: 0.85; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .overlay-url {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .overlay-url code {
+            flex: 1;
+            font-size: 12px;
+            color: var(--accent);
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .error-msg {
+            color: var(--red);
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>chukka-obs</h1>
+        <div class="status-dot not-configured" id="status-dot"></div>
+    </div>
+
+    <div class="section match-info" id="match-section">
+        <div class="match-name" id="match-name">No match connected</div>
+        <div class="match-detail" id="match-detail"></div>
+        <div class="status-text" id="status-text">Paste a token URL below to get started</div>
+    </div>
+
+    <div class="section">
+        <label>Token URL</label>
+        <div class="input-row">
+            <input type="text" id="token-input" placeholder="https://chukka.app/s/..." />
+            <button id="connect-btn">Connect</button>
+        </div>
+        <div class="error-msg" id="error-msg"></div>
+    </div>
+
+    <div class="section">
+        <label>Overlay URL</label>
+        <div class="overlay-url">
+            <code id="overlay-url">loading...</code>
+            <button class="btn-ghost copy-btn" id="copy-btn">Copy</button>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const $ = id => document.getElementById(id);
+        let ws = null;
+
+        function connect() {
+            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${location.host}/dock-state`);
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    updateDock(data);
+                } catch (e) {
+                    console.error('Parse error:', e);
+                }
+            };
+
+            ws.onclose = () => {
+                setTimeout(connect, 2000);
+            };
+
+            ws.onerror = () => ws.close();
+        }
+
+        function updateDock(data) {
+            const dot = $('status-dot');
+            const status = data.connection?.status || 'not_configured';
+
+            dot.className = 'status-dot ' + status.replace('_', '-');
+
+            if (data.match_name) {
+                $('match-name').textContent = data.match_name;
+                const parts = [];
+                if (data.period) parts.push(data.period);
+                if (data.clock) parts.push(data.clock);
+                if (data.score) parts.push(data.score);
+                $('match-detail').textContent = parts.join(' \u00b7 ');
+            } else {
+                $('match-name').textContent = 'No match connected';
+                $('match-detail').textContent = '';
+            }
+
+            if (status === 'connected') {
+                $('status-text').textContent = 'Connected';
+            } else if (status === 'reconnecting') {
+                const count = data.connection?.retry_count || 0;
+                $('status-text').textContent = `Reconnecting (attempt ${count})...`;
+            } else if (status === 'disconnected') {
+                $('status-text').textContent = data.connection?.error || 'Disconnected';
+            } else {
+                $('status-text').textContent = 'Paste a token URL below to get started';
+            }
+
+            if (data.overlay_url) {
+                $('overlay-url').textContent = data.overlay_url;
+            }
+        }
+
+        $('connect-btn').addEventListener('click', async () => {
+            const url = $('token-input').value.trim();
+            if (!url) return;
+
+            const btn = $('connect-btn');
+            const err = $('error-msg');
+            btn.disabled = true;
+            err.style.display = 'none';
+
+            try {
+                const resp = await fetch('/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url }),
+                });
+
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    err.textContent = data.error || 'Connection failed';
+                    err.style.display = 'block';
+                } else {
+                    $('token-input').value = '';
+                }
+            } catch (e) {
+                err.textContent = 'Network error';
+                err.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        $('token-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') $('connect-btn').click();
+        });
+
+        $('copy-btn').addEventListener('click', () => {
+            const url = $('overlay-url').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                $('copy-btn').textContent = 'Copied!';
+                setTimeout(() => $('copy-btn').textContent = 'Copy', 1500);
+            });
+        });
+
+        connect();
+    })();
+    </script>
+</body>
+</html>

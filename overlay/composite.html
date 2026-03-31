@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>chukka-obs composite overlay</title>
+    <link rel="stylesheet" href="/assets/overlay.css">
+</head>
+<body>
+
+    <!-- Scorebug — top-left, always visible except during shootout -->
+    <div id="scorebug" class="overlay-region visible">
+        <div class="sb-team sb-team-home">
+            <div class="sb-possession" id="sb-home-poss"></div>
+            <div class="sb-team-name" id="sb-home-name">HOME</div>
+        </div>
+        <div class="sb-score" id="sb-home-score">0</div>
+        <div class="sb-centre">
+            <div class="sb-period" id="sb-period">Q1</div>
+            <div class="sb-clock" id="sb-clock">8:00</div>
+        </div>
+        <div class="sb-score" id="sb-away-score">0</div>
+        <div class="sb-team sb-team-away">
+            <div class="sb-team-name" id="sb-away-name">AWAY</div>
+            <div class="sb-possession" id="sb-away-poss"></div>
+        </div>
+    </div>
+
+    <!-- Exclusion timers — bottom-left -->
+    <div id="exclusions" class="overlay-region">
+        <div id="exc-slots"></div>
+    </div>
+
+    <!-- Goal animation — centre -->
+    <div id="goal-animation" class="overlay-region">
+        <div class="goal-inner">
+            <div class="goal-label">GOAL</div>
+            <div class="goal-team" id="goal-team-name"></div>
+            <div class="goal-score" id="goal-score-display"></div>
+            <div class="goal-cap" id="goal-cap-display"></div>
+        </div>
+    </div>
+
+    <!-- Foul-out indicator — centre -->
+    <div id="foul-out" class="overlay-region">
+        <div class="foulout-inner">
+            <div class="foulout-label">FOULED OUT</div>
+            <div class="foulout-cap" id="foulout-cap-display"></div>
+            <div class="foulout-fouls" id="foulout-count"></div>
+        </div>
+    </div>
+
+    <!-- Quarter summary — centre -->
+    <div id="quarter-summary" class="overlay-region">
+        <div class="qs-inner">
+            <div class="qs-label">END OF PERIOD</div>
+            <div class="qs-period" id="qs-period-display"></div>
+            <div class="qs-score" id="qs-score-display"></div>
+        </div>
+    </div>
+
+    <!-- Possession clock — bottom-right -->
+    <div id="possession-clock" class="overlay-region">
+        <div class="pc-inner">
+            <div class="pc-time" id="pc-time">28</div>
+            <div class="pc-mode" id="pc-mode">28s</div>
+        </div>
+    </div>
+
+    <!-- Shootout — top-left (replaces scorebug) -->
+    <div id="shootout" class="overlay-region">
+        <div class="so-inner">
+            <div class="so-header">
+                <div class="so-label">Penalty Shootout</div>
+                <div class="so-round" id="so-round-display">Round 1</div>
+            </div>
+            <div class="so-teams">
+                <div class="so-team">
+                    <div class="so-team-name" id="so-home-name">HOME</div>
+                    <div class="so-team-score" id="so-home-score">0</div>
+                </div>
+                <div class="so-team">
+                    <div class="so-team-name" id="so-away-name">AWAY</div>
+                    <div class="so-team-score" id="so-away-score">0</div>
+                </div>
+            </div>
+            <div class="so-shots" id="so-shots-display"></div>
+        </div>
+    </div>
+
+    <!-- Lower third — bottom-left -->
+    <div id="lower-third" class="overlay-region">
+        <div class="lt-inner">
+            <div class="lt-cap" id="lt-cap-display"></div>
+            <div class="lt-name" id="lt-name-display"></div>
+        </div>
+    </div>
+
+    <script src="/assets/overlay.js"></script>
+</body>
+</html>

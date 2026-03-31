@@ -1,0 +1,520 @@
+/* ==========================================================================
+   chukka-obs composite overlay — 1920×1080 canvas
+   ========================================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --home-colour: #003087;
+    --away-colour: #ffffff;
+    --home-text: #ffffff;
+    --away-text: #000000;
+
+    --bg: rgba(15, 15, 15, 0.88);
+    --bg-solid: #0f0f0f;
+    --text: #f0f0f0;
+    --text-muted: #999;
+    --accent: #00c2ff;
+    --gold: #ffd700;
+    --danger: #ff4444;
+
+    --radius: 6px;
+    --transition-in: 200ms ease-out;
+    --transition-out: 300ms ease-in;
+}
+
+body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    font-family: -apple-system, 'Segoe UI', system-ui, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: transparent;
+}
+
+/* ==========================================================================
+   Shared overlay region behaviour
+   ========================================================================== */
+
+.overlay-region {
+    position: absolute;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition:
+        opacity var(--transition-out),
+        transform var(--transition-out);
+    pointer-events: none;
+}
+
+.overlay-region.visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity var(--transition-in),
+        transform var(--transition-in);
+}
+
+/* ==========================================================================
+   Scorebug — top-left
+   ========================================================================== */
+
+#scorebug {
+    top: 40px;
+    left: 40px;
+    display: flex;
+    align-items: stretch;
+    background: var(--bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    font-size: 18px;
+    min-width: 380px;
+}
+
+.sb-team {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    min-width: 130px;
+}
+
+.sb-team-home {
+    background: var(--home-colour);
+    color: var(--home-text);
+}
+
+.sb-team-away {
+    background: var(--away-colour);
+    color: var(--away-text);
+}
+
+.sb-cap-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.sb-team-name {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 16px;
+}
+
+.sb-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    padding: 10px 14px;
+    font-size: 28px;
+    font-weight: 800;
+    background: var(--bg-solid);
+}
+
+.sb-centre {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    gap: 2px;
+    background: var(--bg-solid);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sb-period {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.sb-clock {
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.sb-possession {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 200ms;
+}
+
+.sb-possession.active {
+    opacity: 1;
+}
+
+/* ==========================================================================
+   Exclusion timers — bottom-left
+   ========================================================================== */
+
+#exclusions {
+    bottom: 120px;
+    left: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.exc-slot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--bg);
+    border-radius: var(--radius);
+    font-size: 16px;
+    min-width: 160px;
+    transition:
+        opacity var(--transition-out),
+        transform var(--transition-out);
+}
+
+.exc-slot.violent {
+    border-left: 3px solid var(--danger);
+}
+
+.exc-cap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.exc-timer {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 20px;
+}
+
+/* ==========================================================================
+   Goal animation — centre
+   ========================================================================== */
+
+#goal-animation {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    text-align: center;
+}
+
+#goal-animation.visible {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.goal-inner {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 40px 60px;
+    min-width: 340px;
+}
+
+.goal-label {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--gold);
+    margin-bottom: 8px;
+}
+
+.goal-team {
+    font-size: 36px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+}
+
+.goal-score {
+    font-size: 52px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 4px;
+}
+
+.goal-cap {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+/* ==========================================================================
+   Foul-out indicator — centre
+   ========================================================================== */
+
+#foul-out {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    text-align: center;
+}
+
+#foul-out.visible {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.foulout-inner {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 30px 50px;
+    border-top: 3px solid var(--danger);
+}
+
+.foulout-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--danger);
+    margin-bottom: 6px;
+}
+
+.foulout-cap {
+    font-size: 48px;
+    font-weight: 900;
+    margin-bottom: 4px;
+}
+
+.foulout-fouls {
+    font-size: 16px;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Quarter summary — centre
+   ========================================================================== */
+
+#quarter-summary {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    text-align: center;
+}
+
+#quarter-summary.visible {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.qs-inner {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 30px 50px;
+    min-width: 300px;
+}
+
+.qs-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.qs-period {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.qs-score {
+    font-size: 48px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 4px;
+}
+
+/* ==========================================================================
+   Possession clock — bottom-right
+   ========================================================================== */
+
+#possession-clock {
+    bottom: 40px;
+    right: 40px;
+    transform: translateY(8px);
+}
+
+#possession-clock.visible {
+    transform: translateY(0);
+}
+
+.pc-inner {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    text-align: center;
+    min-width: 80px;
+}
+
+.pc-time {
+    font-size: 32px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    transition: color 200ms;
+}
+
+.pc-time.urgent {
+    color: var(--danger);
+    animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+.pc-mode {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+@keyframes pulse {
+    from { opacity: 1; }
+    to { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   Shootout — top-left (replaces scorebug)
+   ========================================================================== */
+
+#shootout {
+    top: 40px;
+    left: 40px;
+}
+
+.so-inner {
+    background: var(--bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-width: 400px;
+}
+
+.so-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--bg-solid);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.so-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+}
+
+.so-round {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.so-teams {
+    display: flex;
+    justify-content: space-around;
+    padding: 16px 20px;
+}
+
+.so-team {
+    text-align: center;
+}
+
+.so-team-name {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.so-team-score {
+    font-size: 36px;
+    font-weight: 900;
+}
+
+.so-shots {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 12px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.so-shot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.so-shot.goal {
+    background: #22c55e;
+    color: #fff;
+}
+
+.so-shot.miss,
+.so-shot.saved {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Lower third — bottom-left
+   ========================================================================== */
+
+#lower-third {
+    bottom: 40px;
+    left: 40px;
+    transform: translateY(8px);
+}
+
+#lower-third.visible {
+    transform: translateY(0);
+}
+
+.lt-inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 12px 24px;
+    overflow: hidden;
+}
+
+.lt-cap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.lt-name {
+    font-size: 20px;
+    font-weight: 700;
+}
