@@ -14,7 +14,14 @@ Standalone binary that bridges [Chukka](https://github.com/chukka-wp/chukka) mat
 
 Rust
 
-## Setup
+## Install
+
+Download the latest release for your platform:
+
+- [macOS (universal)](https://chukka.app/download/obs/macos)
+- [Windows](https://chukka.app/download/obs/windows)
+
+Or build from source:
 
 ```bash
 cargo build --release
