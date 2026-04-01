@@ -60,6 +60,7 @@ jobs:
         run: Compress-Archive -Path target/x86_64-pc-windows-msvc/release/chukka-obs.exe -DestinationPath chukka-obs-windows.zip
 
       - name: Upload to release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ github.event.release.tag_name }}
