@@ -31,6 +31,8 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/config", get(config_handler))
         .route("/overlay/composite", get(composite_handler))
         .route("/assets/{*file}", get(assets_handler))
+        .route("/favicon.ico", get(favicon_handler))
+        .route("/favicon-32.png", get(favicon_32_handler))
         .route("/connect", post(connect_handler))
         .layer(CorsLayer::permissive())
         .with_state(state)
@@ -46,6 +48,14 @@ async fn dock_handler() -> impl IntoResponse {
 
 async fn composite_handler() -> impl IntoResponse {
     serve_embedded("composite.html")
+}
+
+async fn favicon_handler() -> impl IntoResponse {
+    serve_embedded("favicon.ico")
+}
+
+async fn favicon_32_handler() -> impl IntoResponse {
+    serve_embedded("favicon-32.png")
 }
 
 async fn assets_handler(Path(file): Path<String>) -> impl IntoResponse {

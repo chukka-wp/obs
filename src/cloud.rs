@@ -207,7 +207,7 @@ where
             });
 
             let _ = write
-                .send(WsMessage::Text(pong.to_string().into()))
+                .send(WsMessage::Text(pong.to_string()))
                 .await;
         }
     }

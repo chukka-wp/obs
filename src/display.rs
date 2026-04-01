@@ -193,7 +193,7 @@ impl DisplayEngine {
         display.goal_animation.expires_at = None;
 
         // Restore foul-out if its timer is still running (higher priority than summary).
-        if display.foul_out.expires_at.map_or(false, |e| e > now_millis()) {
+        if display.foul_out.expires_at.is_some_and(|e| e > now_millis()) {
             display.foul_out.visible = true;
         } else if in_break {
             // Restore quarter summary if we're still in a break.
