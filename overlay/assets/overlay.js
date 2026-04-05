@@ -46,6 +46,9 @@
 
         ws.onclose = () => {
             console.log('[chukka-obs] Disconnected — reconnecting in 2s');
+            gameState = null;
+            displayState = null;
+            toggleIdle(true);
             setTimeout(connect, 2000);
         };
 
@@ -98,6 +101,9 @@
     function render() {
         if (!gameState || !displayState) return;
 
+        // Hide idle watermark once we have match data.
+        toggleIdle(false);
+
         renderScorebug();
         renderExclusions();
         renderGoalAnimation();
@@ -106,6 +112,17 @@
         renderPossessionClock();
         renderShootout();
         renderLowerThird();
+    }
+
+    function toggleIdle(visible) {
+        var el = document.getElementById('idle-watermark');
+        if (el) el.classList.toggle('visible', visible);
+
+        if (visible) {
+            startIdleHeartbeat();
+        } else {
+            stopIdleHeartbeat();
+        }
     }
 
     function toggleRegion(id, visible) {
@@ -342,8 +359,41 @@
     }
 
     // -----------------------------------------------------------------------
+    // Idle heartbeat — cycles text every 5s so you can confirm the overlay
+    // is live when no match is connected.
+    // -----------------------------------------------------------------------
+
+    var idleInterval = null;
+    var idleMessages = [
+        'Connect a match via the chukka-obs dock',
+        'Waiting for match data\u2026',
+        'Overlay ready',
+    ];
+    var idleIndex = 0;
+
+    function startIdleHeartbeat() {
+        if (idleInterval) return;
+        idleIndex = 0;
+        idleInterval = setInterval(function () {
+            idleIndex = (idleIndex + 1) % idleMessages.length;
+            var el = document.querySelector('.idle-hint');
+            if (el) el.textContent = idleMessages[idleIndex];
+        }, 5000);
+    }
+
+    function stopIdleHeartbeat() {
+        if (idleInterval) {
+            clearInterval(idleInterval);
+            idleInterval = null;
+        }
+    }
+
+    // -----------------------------------------------------------------------
     // Init
     // -----------------------------------------------------------------------
 
-    document.addEventListener('DOMContentLoaded', connect);
+    document.addEventListener('DOMContentLoaded', function () {
+        startIdleHeartbeat();
+        connect();
+    });
 })();

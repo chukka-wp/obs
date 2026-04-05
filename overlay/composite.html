@@ -9,7 +9,7 @@
 <body>
 
     <!-- Scorebug — top-left, always visible except during shootout -->
-    <div id="scorebug" class="overlay-region visible">
+    <div id="scorebug" class="overlay-region">
         <div class="sb-team sb-team-home">
             <div class="sb-possession" id="sb-home-poss"></div>
             <div class="sb-team-name" id="sb-home-name">HOME</div>
@@ -94,6 +94,12 @@
             <div class="lt-cap" id="lt-cap-display"></div>
             <div class="lt-name" id="lt-name-display"></div>
         </div>
+    </div>
+
+    <!-- Idle watermark — visible when no match connected -->
+    <div id="idle-watermark" class="visible">
+        <img src="/assets/chukka-logo.png" alt="chukka" />
+        <div class="idle-hint">Connect a match via the chukka-obs dock</div>
     </div>
 
     <script src="/assets/overlay.js"></script>

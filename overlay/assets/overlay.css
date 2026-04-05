@@ -479,6 +479,37 @@ body {
 }
 
 /* ==========================================================================
+   Idle watermark — bottom-right, visible when no match connected
+   ========================================================================== */
+
+#idle-watermark {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    opacity: 0;
+    transition: opacity var(--transition-out);
+    pointer-events: none;
+}
+
+#idle-watermark.visible {
+    opacity: 1;
+    transition: opacity var(--transition-in);
+}
+
+#idle-watermark img {
+    height: 80px;
+    width: auto;
+}
+
+.idle-hint {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: right;
+    letter-spacing: 0.3px;
+}
+
+/* ==========================================================================
    Lower third — bottom-left
    ========================================================================== */
 
