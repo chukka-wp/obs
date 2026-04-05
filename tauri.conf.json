@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
-  "productName": "chukka-obs",
+  "productName": "Chukka Broadcast",
   "version": "0.1.0",
   "identifier": "app.chukka.obs",
   "build": {
@@ -9,9 +9,9 @@
   "app": {
     "windows": [
       {
-        "title": "chukka-obs",
-        "width": 550,
-        "height": 700,
+        "title": "Chukka Broadcast",
+        "width": 900,
+        "height": 520,
         "center": true,
         "resizable": true,
         "minWidth": 400,

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>chukka-obs</title>
+    <title>Chukka Broadcast</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
@@ -12,7 +12,6 @@
         :root {
             --bg: #1a1a1a;
             --surface: #242424;
-            --surface-hover: #2a2a2a;
             --border: #333;
             --text: #e0e0e0;
             --text-muted: #888;
@@ -22,27 +21,33 @@
             --red: #ef4444;
         }
 
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
             font-size: 14px;
-            padding: 24px;
-            min-width: 360px;
-            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
         }
 
+        /* Header */
         .header {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 24px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
         }
 
         .header h1 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            letter-spacing: 0.3px;
             flex: 1;
         }
 
@@ -74,12 +79,38 @@
 
         @keyframes blink { 50% { opacity: 0.3; } }
 
+        /* Main layout: controls left, preview right */
+        .main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .controls {
+            width: 280px;
+            min-width: 280px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+        }
+
+        .preview-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            min-width: 0;
+        }
+
+        /* Sections */
         .section {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
+            padding: 14px;
         }
 
         .section-title {
@@ -88,48 +119,43 @@
             text-transform: uppercase;
             letter-spacing: 0.8px;
             color: var(--text-muted);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         /* Match info */
-        .match-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
         .match-name {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
         }
 
         .match-detail {
             color: var(--text-muted);
-            font-size: 14px;
+            font-size: 13px;
+            margin-top: 2px;
         }
 
         .status-text {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
             margin-top: 4px;
         }
 
         .no-match {
             color: var(--text-muted);
-            font-size: 15px;
+            font-size: 14px;
         }
 
         /* Connect form */
         .connect-help {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
-            margin-bottom: 12px;
-            line-height: 1.5;
+            margin-bottom: 10px;
+            line-height: 1.4;
         }
 
         .input-row {
             display: flex;
-            gap: 8px;
+            gap: 6px;
         }
 
         input[type="text"] {
@@ -138,27 +164,23 @@
             border: 1px solid var(--border);
             border-radius: 6px;
             color: var(--text);
-            padding: 10px 12px;
-            font-size: 14px;
+            padding: 8px 10px;
+            font-size: 13px;
             outline: none;
             transition: border-color 200ms;
+            min-width: 0;
         }
 
-        input[type="text"]:focus {
-            border-color: var(--accent);
-        }
-
-        input[type="text"]::placeholder {
-            color: #555;
-        }
+        input[type="text"]:focus { border-color: var(--accent); }
+        input[type="text"]::placeholder { color: #555; }
 
         button {
             background: var(--accent);
             color: #000;
             border: none;
             border-radius: 6px;
-            padding: 10px 18px;
-            font-size: 14px;
+            padding: 8px 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: opacity 200ms;
@@ -172,8 +194,8 @@
             background: transparent;
             color: var(--text-muted);
             border: 1px solid var(--border);
-            padding: 6px 12px;
-            font-size: 13px;
+            padding: 6px 10px;
+            font-size: 12px;
         }
 
         .btn-ghost:hover {
@@ -183,8 +205,8 @@
 
         .error-msg {
             color: var(--red);
-            font-size: 13px;
-            margin-top: 8px;
+            font-size: 12px;
+            margin-top: 6px;
             display: none;
         }
 
@@ -192,31 +214,48 @@
         .overlay-url-row {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .overlay-url-row code {
             flex: 1;
-            font-size: 13px;
+            font-size: 12px;
             color: var(--accent);
             word-break: break-all;
             font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
         }
 
         .overlay-help {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
-            margin-bottom: 10px;
-            line-height: 1.5;
+            margin-bottom: 8px;
+            line-height: 1.4;
         }
 
         /* Preview */
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .preview-header .section-title {
+            margin-bottom: 0;
+        }
+
+        .preview-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
         .preview-container {
             position: relative;
             background: #000;
             border-radius: 6px;
             overflow: hidden;
-            aspect-ratio: 16 / 9;
+            flex: 1;
+            min-height: 0;
         }
 
         .preview-container iframe {
@@ -227,82 +266,77 @@
             pointer-events: none;
         }
 
-        .preview-label {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            font-size: 11px;
-            color: rgba(255,255,255,0.4);
-            background: rgba(0,0,0,0.5);
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-        /* Server indicator */
-        .server-status {
+        /* Footer */
+        .footer {
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-muted);
-            padding-top: 8px;
+            padding: 8px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
         }
 
-        .server-status .dot {
+        .footer .dot {
             display: inline-block;
             width: 6px;
             height: 6px;
             border-radius: 50%;
             background: var(--green);
-            margin-right: 6px;
+            margin-right: 5px;
             vertical-align: middle;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>chukka-obs</h1>
+        <h1>Chukka Broadcast</h1>
         <div class="status-badge">
             <div class="status-dot not-configured" id="status-dot"></div>
             <span id="status-label">Not connected</span>
         </div>
     </div>
 
-    <div class="section">
-        <div class="section-title">Match</div>
-        <div class="match-info" id="match-section">
-            <div class="no-match" id="match-name">No match connected</div>
-            <div class="match-detail" id="match-detail"></div>
-            <div class="status-text" id="status-text"></div>
+    <div class="main">
+        <div class="controls">
+            <div class="section">
+                <div class="section-title">Match</div>
+                <div class="no-match" id="match-name">No match connected</div>
+                <div class="match-detail" id="match-detail"></div>
+                <div class="status-text" id="status-text"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Connect</div>
+                <div class="connect-help">Enter the 6-character code or token URL from your match page.</div>
+                <div class="input-row">
+                    <input type="text" id="token-input" placeholder="Code or URL..." />
+                    <button id="connect-btn">Connect</button>
+                </div>
+                <div class="error-msg" id="error-msg"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">OBS Browser Source</div>
+                <div class="overlay-help">Add this URL as a Browser Source in OBS (1920 x 1080).</div>
+                <div class="overlay-url-row">
+                    <code id="overlay-url">loading...</code>
+                    <button class="btn-ghost" id="copy-btn">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-pane">
+            <div class="preview-header">
+                <div class="section-title">Overlay Preview</div>
+                <div class="preview-label">Live</div>
+            </div>
+            <div class="preview-container" id="preview-container">
+                <iframe id="preview-iframe"></iframe>
+            </div>
         </div>
     </div>
 
-    <div class="section">
-        <div class="section-title">Connect</div>
-        <div class="connect-help">Enter the 6-character code or token URL from your match setup page.</div>
-        <div class="input-row">
-            <input type="text" id="token-input" placeholder="Code or URL..." />
-            <button id="connect-btn">Connect</button>
-        </div>
-        <div class="error-msg" id="error-msg"></div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">OBS Browser Source</div>
-        <div class="overlay-help">Add this URL as a Browser Source in OBS (set to 1920 x 1080).</div>
-        <div class="overlay-url-row">
-            <code id="overlay-url">loading...</code>
-            <button class="btn-ghost" id="copy-btn">Copy</button>
-        </div>
-    </div>
-
-    <div class="section" id="preview-section">
-        <div class="section-title">Overlay Preview</div>
-        <div class="preview-container" id="preview-container">
-            <iframe id="preview-iframe" src="" sandbox="allow-scripts allow-same-origin"></iframe>
-            <div class="preview-label">Live preview</div>
-        </div>
-    </div>
-
-    <div class="server-status">
+    <div class="footer">
         <span class="dot"></span>Server running on <span id="server-port">localhost:4747</span>
     </div>
 
@@ -312,15 +346,31 @@
 
         const $ = id => document.getElementById(id);
         let ws = null;
+        let previewLoaded = false;
 
-        // Scale the preview iframe to fit the container.
         function scalePreview() {
             const container = $('preview-container');
             const iframe = $('preview-iframe');
             if (!container || !iframe) return;
-            const scale = container.offsetWidth / 1920;
+
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+            if (!containerWidth || !containerHeight) return;
+
+            const scaleX = containerWidth / 1920;
+            const scaleY = containerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+
             iframe.style.transform = `scale(${scale})`;
-            container.style.height = `${1080 * scale}px`;
+        }
+
+        function loadPreview() {
+            if (previewLoaded) return;
+            previewLoaded = true;
+
+            const iframe = $('preview-iframe');
+            iframe.src = `${location.protocol}//${location.host}/overlay/composite`;
+            requestAnimationFrame(scalePreview);
         }
 
         function connect() {
@@ -329,17 +379,13 @@
 
             ws.onmessage = (event) => {
                 try {
-                    const data = JSON.parse(event.data);
-                    updateDock(data);
+                    updateDock(JSON.parse(event.data));
                 } catch (e) {
                     console.error('Parse error:', e);
                 }
             };
 
-            ws.onclose = () => {
-                setTimeout(connect, 2000);
-            };
-
+            ws.onclose = () => setTimeout(connect, 2000);
             ws.onerror = () => ws.close();
         }
 
@@ -381,18 +427,10 @@
 
             if (data.overlay_url) {
                 $('overlay-url').textContent = data.overlay_url;
-
-                // Load preview if not already loaded.
-                const iframe = $('preview-iframe');
-                const previewUrl = `${location.protocol}//${location.host}/overlay/composite`;
-                if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
-                    iframe.src = previewUrl;
-                    scalePreview();
-                }
+                loadPreview();
             }
         }
 
-        // Detect short code vs URL.
         function parseInput(value) {
             if (/^[a-zA-Z0-9]{6}$/.test(value)) {
                 return { code: value };
@@ -444,13 +482,11 @@
             });
         });
 
-        // Set up preview scaling.
         window.addEventListener('resize', scalePreview);
-        scalePreview();
-
-        // Show server port.
         $('server-port').textContent = location.host;
 
+        // Load preview immediately — it shows the idle watermark even without a match.
+        loadPreview();
         connect();
     })();
     </script>
