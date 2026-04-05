@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>chukka-obs</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        #loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #333;
+            border-top-color: #00c2ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .text { color: #888; font-size: 14px; }
+        .error { color: #ef4444; font-size: 13px; display: none; margin-top: 8px; text-align: center; padding: 0 24px; }
+        #dock {
+            display: none;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div class="text">Starting server...</div>
+        <div class="error" id="error"></div>
+    </div>
+    <iframe id="dock"></iframe>
+    <script>
+        const port = 4747;
+        let attempts = 0;
+
+        function tryLoad() {
+            attempts++;
+            fetch(`http://localhost:${port}/favicon.ico`, { mode: 'no-cors' })
+                .then(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    const iframe = document.getElementById('dock');
+                    iframe.src = `http://localhost:${port}/dock`;
+                    iframe.style.display = 'block';
+                })
+                .catch(() => {
+                    if (attempts > 100) {
+                        const err = document.getElementById('error');
+                        err.textContent = `Could not connect to server on port ${port}. The port may be in use by another application.`;
+                        err.style.display = 'block';
+                        return;
+                    }
+                    setTimeout(tryLoad, 100);
+                });
+        }
+
+        tryLoad();
+    </script>
+</body>
+</html>

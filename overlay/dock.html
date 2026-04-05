@@ -12,6 +12,7 @@
         :root {
             --bg: #1a1a1a;
             --surface: #242424;
+            --surface-hover: #2a2a2a;
             --border: #333;
             --text: #e0e0e0;
             --text-muted: #888;
@@ -25,30 +26,45 @@
             font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
-            font-size: 13px;
-            padding: 16px;
-            min-width: 280px;
+            font-size: 14px;
+            padding: 24px;
+            min-width: 360px;
+            line-height: 1.5;
         }
 
         .header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
         .header h1 {
-            font-size: 15px;
+            font-size: 18px;
             font-weight: 700;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
+            flex: 1;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            padding: 4px 12px 4px 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 100px;
         }
 
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            background: var(--red);
+            background: var(--text-muted);
             transition: background 300ms;
+            flex-shrink: 0;
         }
 
         .status-dot.connected { background: var(--green); }
@@ -56,18 +72,26 @@
         .status-dot.disconnected { background: var(--red); }
         .status-dot.not-configured { background: var(--text-muted); }
 
-        @keyframes blink {
-            50% { opacity: 0.3; }
-        }
+        @keyframes blink { 50% { opacity: 0.3; } }
 
         .section {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 12px;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
             margin-bottom: 12px;
         }
 
+        /* Match info */
         .match-info {
             display: flex;
             flex-direction: column;
@@ -75,44 +99,47 @@
         }
 
         .match-name {
-            font-size: 15px;
+            font-size: 18px;
             font-weight: 600;
         }
 
         .match-detail {
             color: var(--text-muted);
-            font-size: 12px;
+            font-size: 14px;
         }
 
         .status-text {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-muted);
             margin-top: 4px;
         }
 
-        label {
-            display: block;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .no-match {
             color: var(--text-muted);
-            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        /* Connect form */
+        .connect-help {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            line-height: 1.5;
         }
 
         .input-row {
             display: flex;
-            gap: 6px;
+            gap: 8px;
         }
 
         input[type="text"] {
             flex: 1;
             background: var(--bg);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 6px;
             color: var(--text);
-            padding: 8px 10px;
-            font-size: 13px;
+            padding: 10px 12px;
+            font-size: 14px;
             outline: none;
             transition: border-color 200ms;
         }
@@ -129,9 +156,9 @@
             background: var(--accent);
             color: #000;
             border: none;
-            border-radius: 4px;
-            padding: 8px 14px;
-            font-size: 13px;
+            border-radius: 6px;
+            padding: 10px 18px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: opacity 200ms;
@@ -145,6 +172,8 @@
             background: transparent;
             color: var(--text-muted);
             border: 1px solid var(--border);
+            padding: 6px 12px;
+            font-size: 13px;
         }
 
         .btn-ghost:hover {
@@ -152,59 +181,129 @@
             border-color: var(--text-muted);
         }
 
-        .overlay-url {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .overlay-url code {
-            flex: 1;
-            font-size: 12px;
-            color: var(--accent);
-            word-break: break-all;
-        }
-
-        .copy-btn {
-            padding: 4px 8px;
-            font-size: 11px;
-        }
-
         .error-msg {
             color: var(--red);
-            font-size: 12px;
-            margin-top: 6px;
+            font-size: 13px;
+            margin-top: 8px;
             display: none;
+        }
+
+        /* Overlay URL */
+        .overlay-url-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .overlay-url-row code {
+            flex: 1;
+            font-size: 13px;
+            color: var(--accent);
+            word-break: break-all;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        .overlay-help {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        /* Preview */
+        .preview-container {
+            position: relative;
+            background: #000;
+            border-radius: 6px;
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+        }
+
+        .preview-container iframe {
+            width: 1920px;
+            height: 1080px;
+            border: none;
+            transform-origin: top left;
+            pointer-events: none;
+        }
+
+        .preview-label {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            background: rgba(0,0,0,0.5);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* Server indicator */
+        .server-status {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            padding-top: 8px;
+        }
+
+        .server-status .dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            margin-right: 6px;
+            vertical-align: middle;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>chukka-obs</h1>
-        <div class="status-dot not-configured" id="status-dot"></div>
-    </div>
-
-    <div class="section match-info" id="match-section">
-        <div class="match-name" id="match-name">No match connected</div>
-        <div class="match-detail" id="match-detail"></div>
-        <div class="status-text" id="status-text">Paste a token URL below to get started</div>
+        <div class="status-badge">
+            <div class="status-dot not-configured" id="status-dot"></div>
+            <span id="status-label">Not connected</span>
+        </div>
     </div>
 
     <div class="section">
-        <label>Token URL</label>
+        <div class="section-title">Match</div>
+        <div class="match-info" id="match-section">
+            <div class="no-match" id="match-name">No match connected</div>
+            <div class="match-detail" id="match-detail"></div>
+            <div class="status-text" id="status-text"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Connect</div>
+        <div class="connect-help">Enter the 6-character code or token URL from your match setup page.</div>
         <div class="input-row">
-            <input type="text" id="token-input" placeholder="https://chukka.app/s/..." />
+            <input type="text" id="token-input" placeholder="Code or URL..." />
             <button id="connect-btn">Connect</button>
         </div>
         <div class="error-msg" id="error-msg"></div>
     </div>
 
     <div class="section">
-        <label>Overlay URL</label>
-        <div class="overlay-url">
+        <div class="section-title">OBS Browser Source</div>
+        <div class="overlay-help">Add this URL as a Browser Source in OBS (set to 1920 x 1080).</div>
+        <div class="overlay-url-row">
             <code id="overlay-url">loading...</code>
-            <button class="btn-ghost copy-btn" id="copy-btn">Copy</button>
+            <button class="btn-ghost" id="copy-btn">Copy</button>
         </div>
+    </div>
+
+    <div class="section" id="preview-section">
+        <div class="section-title">Overlay Preview</div>
+        <div class="preview-container" id="preview-container">
+            <iframe id="preview-iframe" src="" sandbox="allow-scripts allow-same-origin"></iframe>
+            <div class="preview-label">Live preview</div>
+        </div>
+    </div>
+
+    <div class="server-status">
+        <span class="dot"></span>Server running on <span id="server-port">localhost:4747</span>
     </div>
 
     <script>
@@ -213,6 +312,16 @@
 
         const $ = id => document.getElementById(id);
         let ws = null;
+
+        // Scale the preview iframe to fit the container.
+        function scalePreview() {
+            const container = $('preview-container');
+            const iframe = $('preview-iframe');
+            if (!container || !iframe) return;
+            const scale = container.offsetWidth / 1920;
+            iframe.style.transform = `scale(${scale})`;
+            container.style.height = `${1080 * scale}px`;
+        }
 
         function connect() {
             const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -236,12 +345,14 @@
 
         function updateDock(data) {
             const dot = $('status-dot');
+            const label = $('status-label');
             const status = data.connection?.status || 'not_configured';
 
             dot.className = 'status-dot ' + status.replace('_', '-');
 
             if (data.match_name) {
                 $('match-name').textContent = data.match_name;
+                $('match-name').className = 'match-name';
                 const parts = [];
                 if (data.period) parts.push(data.period);
                 if (data.clock) parts.push(data.clock);
@@ -249,28 +360,49 @@
                 $('match-detail').textContent = parts.join(' \u00b7 ');
             } else {
                 $('match-name').textContent = 'No match connected';
+                $('match-name').className = 'no-match';
                 $('match-detail').textContent = '';
             }
 
             if (status === 'connected') {
-                $('status-text').textContent = 'Connected';
+                label.textContent = 'Connected';
+                $('status-text').textContent = '';
             } else if (status === 'reconnecting') {
                 const count = data.connection?.retry_count || 0;
-                $('status-text').textContent = `Reconnecting (attempt ${count})...`;
+                label.textContent = 'Reconnecting';
+                $('status-text').textContent = `Attempt ${count}...`;
             } else if (status === 'disconnected') {
-                $('status-text').textContent = data.connection?.error || 'Disconnected';
+                label.textContent = 'Disconnected';
+                $('status-text').textContent = data.connection?.error || '';
             } else {
-                $('status-text').textContent = 'Paste a token URL below to get started';
+                label.textContent = 'Not connected';
+                $('status-text').textContent = '';
             }
 
             if (data.overlay_url) {
                 $('overlay-url').textContent = data.overlay_url;
+
+                // Load preview if not already loaded.
+                const iframe = $('preview-iframe');
+                const previewUrl = `${location.protocol}//${location.host}/overlay/composite`;
+                if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
+                    iframe.src = previewUrl;
+                    scalePreview();
+                }
             }
         }
 
+        // Detect short code vs URL.
+        function parseInput(value) {
+            if (/^[a-zA-Z0-9]{6}$/.test(value)) {
+                return { code: value };
+            }
+            return { url: value };
+        }
+
         $('connect-btn').addEventListener('click', async () => {
-            const url = $('token-input').value.trim();
-            if (!url) return;
+            const raw = $('token-input').value.trim();
+            if (!raw) return;
 
             const btn = $('connect-btn');
             const err = $('error-msg');
@@ -281,7 +413,7 @@
                 const resp = await fetch('/connect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url }),
+                    body: JSON.stringify(parseInput(raw)),
                 });
 
                 const data = await resp.json();
@@ -311,6 +443,13 @@
                 setTimeout(() => $('copy-btn').textContent = 'Copy', 1500);
             });
         });
+
+        // Set up preview scaling.
+        window.addEventListener('resize', scalePreview);
+        scalePreview();
+
+        // Show server port.
+        $('server-port').textContent = location.host;
 
         connect();
     })();

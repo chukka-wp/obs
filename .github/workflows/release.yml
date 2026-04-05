@@ -8,92 +8,41 @@ permissions:
   contents: write
 
 jobs:
-  build-macos:
-    runs-on: macos-latest
+  build-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+          - platform: windows-latest
+            args: --target x86_64-pc-windows-msvc
+
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
+          targets: aarch64-apple-darwin,x86_64-apple-darwin,x86_64-pc-windows-msvc
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Build aarch64
-        run: cargo build --release --target aarch64-apple-darwin
-
-      - name: Build x86_64
-        run: cargo build --release --target x86_64-apple-darwin
-
-      - name: Create universal binary
-        run: |
-          lipo -create \
-            target/aarch64-apple-darwin/release/chukka-obs \
-            target/x86_64-apple-darwin/release/chukka-obs \
-            -output chukka-obs
-          chmod +x chukka-obs
-
-      - name: Import signing certificate
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-        run: |
-          echo "$APPLE_CERTIFICATE" | base64 --decode > cert.p12
-          security create-keychain -p "" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
-          security import cert.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-          rm cert.p12
-
-      - name: Sign binary
-        run: |
-          codesign --force --options runtime --sign "Developer ID Application: CCMx Pty Limited (DH563MAAXU)" chukka-obs
-          codesign --verify --verbose chukka-obs
-
-      - name: Notarize binary
-        env:
+          APPLE_SIGNING_IDENTITY: "Developer ID Application: CCMx Pty Limited (DH563MAAXU)"
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-        run: |
-          ditto -c -k --keepParent chukka-obs chukka-obs-notarize.zip
-          xcrun notarytool submit chukka-obs-notarize.zip \
-            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_PASSWORD" \
-            --wait
-          rm chukka-obs-notarize.zip
-
-      - name: Package
-        run: tar czf chukka-obs-macos.tar.gz chukka-obs
-
-      - name: Upload to release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG_NAME: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG_NAME" chukka-obs-macos.tar.gz
-
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Build
-        run: cargo build --release --target x86_64-pc-windows-msvc
-
-      - name: Package
-        run: Compress-Archive -Path target/x86_64-pc-windows-msvc/release/chukka-obs.exe -DestinationPath chukka-obs-windows.zip
-
-      - name: Upload to release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG_NAME: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG_NAME" chukka-obs-windows.zip
+          tagName: ${{ github.event.release.tag_name }}
+          releaseName: ${{ github.event.release.tag_name }}
+          releaseId: ${{ github.event.release.id }}
+          args: ${{ matrix.args }}

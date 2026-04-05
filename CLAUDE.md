@@ -9,54 +9,58 @@ The full technical spec is at `../obs.md` — read it before any significant wor
 ## Stack
 
 - **Language:** Rust (2021 edition)
+- **Desktop app:** Tauri v2 (webview-based GUI)
 - **Async runtime:** tokio
-- **HTTP server:** axum (localhost:4747)
+- **HTTP server:** axum (localhost:4747, serves overlays to OBS browser sources)
 - **WebSocket client:** tokio-tungstenite (connection to chukka-cloud)
 - **Serialisation:** serde / serde_json
 - **Asset embedding:** rust-embed (overlays compiled into binary)
-- **CLI:** clap
+- **CLI (alt binary):** clap
 - **Logging:** tracing / tracing-subscriber
-- **Config:** config or figment + directories (platform-appropriate paths)
+- **Config:** figment + directories (platform-appropriate paths)
 
 ## Build & Dev Commands
 
 ```bash
-cargo build              # debug build
-cargo build --release    # release build
-cargo test               # run tests
-cargo clippy             # linting
-cargo run                # run locally (serves on localhost:4747)
-cargo run -- --port 4748 # override port
+cargo build                           # debug build (GUI app)
+cargo build --release                 # release build
+cargo test                            # run tests
+cargo clippy                          # linting
+cargo run                             # run GUI app
+cargo run --bin chukka-obs-cli        # run CLI mode (headless, for power users)
+cargo run --bin chukka-obs-cli -- --port 4748  # CLI with port override
 ```
 
-### Cross-platform release builds
+### Release builds
 
-```bash
-# macOS universal binary
-cargo build --release --target aarch64-apple-darwin
-cargo build --release --target x86_64-apple-darwin
-lipo -create target/aarch64-apple-darwin/release/chukka-obs target/x86_64-apple-darwin/release/chukka-obs -output chukka-obs
-
-# Windows
-cargo build --release --target x86_64-pc-windows-msvc
-```
+Release builds use `tauri-apps/tauri-action` in CI, which produces:
+- macOS: `.dmg` installer (code-signed + notarised)
+- Windows: NSIS `.exe` installer
 
 ## Architecture
+
+The app has two layers: a **Tauri GUI window** (the control panel users interact with) and an **axum HTTP server** (serves overlays to OBS browser sources on localhost:4747). Both run in the same process on a shared tokio runtime.
 
 ```
 chukka-cloud (WebSocket)
       │
       ▼
-chukka-obs binary
+chukka-obs app
       │
-      ├── /dock              → streamer control panel (OBS browser dock)
-      ├── /state             → WebSocket: streams GameState to custom overlays
-      ├── /display           → WebSocket: streams { game_state, display } to composite overlay
-      ├── /config            → JSON: team branding, colours, logos
-      ├── /overlay/composite → single composited overlay (all regions)
-      ├── /assets/{file}     → shared CSS/JS (embedded)
-      └── POST /connect      → accept token URL from dock
+      ├── [Tauri window]     → loads /dock from axum (control panel UI)
+      │
+      └── [axum server on localhost:4747]
+            ├── /dock              → control panel HTML (loaded by Tauri window)
+            ├── /dock-state        → WebSocket: status updates to control panel
+            ├── /state             → WebSocket: streams GameState to custom overlays
+            ├── /display           → WebSocket: streams { game_state, display } to composite overlay
+            ├── /config            → JSON: team branding, colours, logos
+            ├── /overlay/composite → single composited overlay (all regions)
+            ├── /assets/{file}     → shared CSS/JS (embedded)
+            └── POST /connect      → accept token URL or short code
 ```
+
+A headless CLI binary (`chukka-obs-cli`) is also available for power users, running the axum server without the Tauri GUI.
 
 ### Producer model
 
