@@ -11,8 +11,14 @@ pub struct Config {
     #[serde(default = "default_cloud_url")]
     pub cloud_url: String,
 
+    #[serde(default = "default_cloud_api_url")]
+    pub cloud_api_url: String,
+
     #[serde(default)]
     pub obs_token: Option<String>,
+
+    #[serde(default)]
+    pub obs_code: Option<String>,
 
     #[serde(default)]
     pub match_id: Option<String>,
@@ -28,6 +34,10 @@ fn default_cloud_url() -> String {
     "wss://chukka.app/ws".to_string()
 }
 
+fn default_cloud_api_url() -> String {
+    "https://chukka.app/api/v1".to_string()
+}
+
 fn default_port() -> u16 {
     4747
 }
@@ -40,7 +50,9 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             cloud_url: default_cloud_url(),
+            cloud_api_url: default_cloud_api_url(),
             obs_token: None,
+            obs_code: None,
             match_id: None,
             port: default_port(),
             log_level: default_log_level(),
@@ -99,19 +111,28 @@ impl Config {
     }
 
     pub fn is_configured(&self) -> bool {
-        self.obs_token.is_some() && self.match_id.is_some()
+        self.match_id.is_some() && (self.obs_token.is_some() || self.obs_code.is_some())
     }
 
     /// Build the full WebSocket URL for connecting to chukka-cloud.
     pub fn ws_url(&self) -> Option<String> {
-        match (&self.match_id, &self.obs_token) {
-            (Some(match_id), Some(token)) => {
-                Some(format!(
-                    "{}/match/{}?token={}",
-                    self.cloud_url, match_id, token
-                ))
-            }
-            _ => None,
+        let match_id = self.match_id.as_deref()?;
+
+        if let Some(code) = &self.obs_code {
+            return Some(format!(
+                "{}/match/{}?code={}",
+                self.cloud_url, match_id, code
+            ));
         }
+
+        if let Some(token) = &self.obs_token {
+            return Some(format!(
+                "{}/match/{}?token={}",
+                self.cloud_url, match_id, token
+            ));
+        }
+
+        None
     }
+
 }

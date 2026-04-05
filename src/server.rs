@@ -103,18 +103,29 @@ async fn config_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse
 
 #[derive(Deserialize)]
 struct ConnectRequest {
+    code: Option<String>,
     url: Option<String>,
     match_id: Option<String>,
     obs_token: Option<String>,
+}
+
+enum Credentials {
+    Code { match_id: String, code: String },
+    Token { match_id: String, obs_token: String },
 }
 
 async fn connect_handler(
     State(state): State<Arc<AppState>>,
     Json(body): Json<ConnectRequest>,
 ) -> impl IntoResponse {
-    let result = resolve_credentials(&body).await;
+    let api_url = {
+        let config = state.config.read().await;
+        config.cloud_api_url.clone()
+    };
 
-    let (match_id, obs_token) = match result {
+    let result = resolve_credentials(&body, &api_url).await;
+
+    let creds = match result {
         Ok(creds) => creds,
         Err(e) => {
             return (
@@ -125,12 +136,23 @@ async fn connect_handler(
         }
     };
 
-    info!(%match_id, "Updating connection credentials");
-
     {
         let mut config = state.config.write().await;
-        config.match_id = Some(match_id);
-        config.obs_token = Some(obs_token);
+
+        match &creds {
+            Credentials::Code { match_id, code } => {
+                info!(%match_id, %code, "Connecting via short code");
+                config.match_id = Some(match_id.clone());
+                config.obs_code = Some(code.clone());
+                config.obs_token = None;
+            }
+            Credentials::Token { match_id, obs_token } => {
+                info!(%match_id, "Connecting via token");
+                config.match_id = Some(match_id.clone());
+                config.obs_token = Some(obs_token.clone());
+                config.obs_code = None;
+            }
+        }
 
         if let Err(e) = config.save() {
             warn!(error = %e, "Failed to persist config to disk");
@@ -142,21 +164,66 @@ async fn connect_handler(
     Json(serde_json::json!({"status": "connecting"})).into_response()
 }
 
-async fn resolve_credentials(body: &ConnectRequest) -> anyhow::Result<(String, String)> {
+async fn resolve_credentials(body: &ConnectRequest, api_url: &str) -> anyhow::Result<Credentials> {
+    // Short code provided — call bootstrap API.
+    if let Some(code) = &body.code {
+        if !code.chars().all(|c| c.is_ascii_alphanumeric()) || code.len() != 6 {
+            anyhow::bail!("Code must be exactly 6 alphanumeric characters");
+        }
+
+        // Build URL from trusted base + validated path segment to prevent SSRF.
+        let mut bootstrap_url = reqwest::Url::parse(api_url)
+            .map_err(|e| anyhow::anyhow!("invalid cloud_api_url: {e}"))?;
+        bootstrap_url
+            .path_segments_mut()
+            .map_err(|_| anyhow::anyhow!("invalid cloud_api_url"))?
+            .push("obs")
+            .push("bootstrap")
+            .push(code);
+
+        let client = reqwest::Client::new();
+        let resp = client
+            // nosemgrep: rust.actix.ssrf.reqwest-taint.reqwest-taint
+            .get(bootstrap_url) // URL built from app config + validated 6-char alphanumeric code
+            .header("Accept", "application/json")
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            anyhow::bail!("Invalid or expired code");
+        }
+
+        let data: serde_json::Value = resp.json().await?;
+
+        let match_id = data["match"]["id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing match.id in bootstrap response"))?
+            .to_string();
+
+        return Ok(Credentials::Code {
+            match_id,
+            code: code.clone(),
+        });
+    }
+
     // Direct credentials provided.
     if let (Some(mid), Some(tok)) = (&body.match_id, &body.obs_token) {
-        return Ok((mid.clone(), tok.clone()));
+        return Ok(Credentials::Token {
+            match_id: mid.clone(),
+            obs_token: tok.clone(),
+        });
     }
 
     // Resolve token URL.
     let url = body
         .url
         .as_deref()
-        .ok_or_else(|| anyhow::anyhow!("provide url or match_id + obs_token"))?;
+        .ok_or_else(|| anyhow::anyhow!("provide code, url, or match_id + obs_token"))?;
 
     let client = reqwest::Client::new();
     let resp = client
-        .get(url)
+        // nosemgrep: rust.actix.ssrf.reqwest-taint.reqwest-taint
+        .get(url) // URL from dock control panel on localhost — intentional functionality
         .header("Accept", "application/json")
         .send()
         .await?;
@@ -177,7 +244,10 @@ async fn resolve_credentials(body: &ConnectRequest) -> anyhow::Result<(String, S
         .ok_or_else(|| anyhow::anyhow!("missing obs_token in token URL response"))?
         .to_string();
 
-    Ok((match_id, obs_token))
+    Ok(Credentials::Token {
+        match_id,
+        obs_token,
+    })
 }
 
 // ---------------------------------------------------------------------------
